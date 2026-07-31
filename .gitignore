@@ -1,7 +1,8 @@
 node_modules/
-package-lock.json
 .DS_Store
 .osgrep
 .playwright-cli/
 .playwright/
 .claude/settings.local.json
+test-results/
+playwright-report/
