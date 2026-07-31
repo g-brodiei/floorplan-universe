@@ -224,6 +224,29 @@ body.tour-open { overflow: hidden; }
   width: 54px;
 }
 
+/* ---------- 顯示單位切換 ---------- */
+
+.unit-switch {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  gap: 0;
+}
+.unit-btn {
+  font-family: var(--font-data);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--graphite);
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  min-height: 34px;
+  cursor: pointer;
+}
+.unit-btn:hover { background: #F1F3EC; }
+.unit-btn:focus-visible { outline: 2px solid var(--window); outline-offset: -2px; }
+.unit-btn.is-active { background: var(--ink); color: var(--paper); }
+
 select,
 input[type="text"],
 input[type="number"] {

@@ -92,12 +92,18 @@
     <span class="tool-sep"></span>
     <div class="tool-group">
       <label class="mini-label">牆厚
-        <input type="number" id="wall-input" value="12" min="0" max="60" step="1">
+        <input type="number" id="wall-input" value="12" min="0" max="60" step="1"><span id="wall-unit">cm</span>
       </label>
       <label class="mini-label">
         <input type="checkbox" id="chk-snap" checked> 貼齊
       </label>
       <button class="btn btn-slim" id="btn-underlay">放底圖</button>
+    </div>
+    <span class="tool-sep"></span>
+    <div class="tool-group unit-switch" role="group" aria-label="顯示單位"
+         title="切換顯示單位。資料一律以公分儲存，只有顯示和輸入跟著換。">
+      <button class="unit-btn is-active" id="unit-cm" aria-pressed="true">cm</button>
+      <button class="unit-btn" id="unit-ftin" aria-pressed="false">ft/in</button>
     </div>
   </div>
 
@@ -244,6 +250,13 @@
       </div>
 
       <div>
+        <h3>顯示單位</h3>
+        <p>工具列右端可以切換 <code>cm</code> 或 <code>ft/in</code>。畫布標示、輸入欄位、
+          文字摘要都會跟著換，但 JSON 資料一律以公分儲存，跟別人交換檔案不會亂掉。
+          呎吋模式下，長度欄位可以輸入 <code>12'6"</code>、<code>76"</code> 或 <code>360cm</code>。</p>
+      </div>
+
+      <div>
         <h3>存檔</h3>
         <p>每次改動都會自動存在你自己的瀏覽器裡，關掉分頁再開回來還在，不會上傳到任何地方。</p>
         <p>但瀏覽器的儲存空間可能被清掉（清除瀏覽資料、無痕模式、換裝置）。
@@ -270,7 +283,7 @@
 
   <footer class="colophon">
     <span>資料只存在你的瀏覽器，不會上傳。</span>
-    <span>單位一律公分。</span>
+    <span>資料以公分儲存，顯示單位可切換 cm 或 ft/in。</span>
   </footer>
 
 </div>
@@ -294,6 +307,7 @@
 <script src="js/schema.js"></script>
 <script src="js/geom.js"></script>
 <script src="js/store.js"></script>
+<script src="js/units.js"></script>
 <script src="js/render.js"></script>
 <script src="js/interact.js"></script>
 <script src="js/ui.js"></script>

@@ -54,7 +54,7 @@ window.FP = window.FP || {};
       doc.name = raw.name.trim().slice(0, 60);
     }
     if (raw.unit && raw.unit !== "cm") {
-      warnings.push("目前只支援公分，已忽略 unit 欄位。");
+      warnings.push("資料檔一律以公分儲存，已忽略 unit 欄位。顯示單位可用工具列的 cm / ft-in 切換。");
     }
     doc.upBearing = norm360(clampNum(raw.upBearing, 0, 360, 0));
     doc.wallThickness = clampNum(raw.wallThickness, 0, 60, 12);

@@ -7,7 +7,7 @@ const { window } = dom;
 window.SVGElement.prototype.getScreenCTM = () => ({ inverse: () => ({}) });
 window.SVGSVGElement.prototype.createSVGPoint = function(){ return {x:0,y:0,matrixTransform(){return{x:0,y:0};}}; };
 window.Element.prototype.getBoundingClientRect = () => ({width:800,height:1000,top:0,left:0});
-['schema','geom','store','render','interact','ui','tour','main'].forEach(n =>
+['schema','geom','store','units','render','interact','ui','tour','main'].forEach(n =>
   window.eval(fs.readFileSync(`${path}/js/${n}.js`,'utf8')));
 
 setTimeout(() => {
