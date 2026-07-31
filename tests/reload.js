@@ -2,7 +2,7 @@ const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path').join(__dirname, '..');
 const html = fs.readFileSync(path + '/index.html', 'utf8');
-const scripts = ['schema','geom','store','render','interact','ui','tour','main']
+const scripts = ['schema','geom','store','units','render','interact','ui','tour','main']
   .map(n => fs.readFileSync(`${path}/js/${n}.js`, 'utf8'));
 
 // 用一個共享的 storage 模擬「同一個瀏覽器、同一個網域」

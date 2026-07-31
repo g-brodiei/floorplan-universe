@@ -30,7 +30,7 @@ const errors = [];
 window.addEventListener('error', e => errors.push('window error: ' + e.message));
 const origErr = console.error;
 
-['schema','geom','store','render','interact','ui','tour','main'].forEach(name => {
+['schema','geom','store','units','render','interact','ui','tour','main'].forEach(name => {
   const code = fs.readFileSync(`${path}/js/${name}.js`, 'utf8');
   try {
     window.eval(code);

@@ -258,11 +258,15 @@
   }
 
   function openRoomListDialog() {
+    var ftin = FP.units.get() === "ftin";
     ui.openDialog(
       "打一份房間清單",
-      '<p class="dialog-text">一行一個房間，格式是「名稱 寬x高」，單位公分。排版之後可以再拖。</p>' +
+      '<p class="dialog-text">一行一個房間，格式是「名稱 寬x高」，單位' +
+      (ftin ? "吋（inch）" : "公分") + "。排版之後可以再拖。</p>" +
       '<textarea id="list-input" class="dialog-textarea" rows="9" ' +
-      'placeholder="客廳 358x487&#10;主臥室 469x358&#10;廁所 183x277&#10;走廊 511x97"></textarea>',
+      'placeholder="' + (ftin
+        ? "客廳 141x192&#10;主臥室 185x141&#10;廁所 72x109&#10;走廊 201x38"
+        : "客廳 358x487&#10;主臥室 469x358&#10;廁所 183x277&#10;走廊 511x97") + '"></textarea>',
       '<button class="btn" data-close>取消</button>' +
       '<button class="btn btn-primary" id="list-ok">建立房間</button>',
       function () {
@@ -300,6 +304,34 @@
       .catch(function () { ui.importFromObject(SAMPLE, "載入範例"); });
   }
 
+  /* ---------- 顯示單位 ---------- */
+
+  /* 牆厚輸入框跟著顯示單位換算：公分整數，或吋（0.5 一格） */
+  function syncWallInput() {
+    var inp = $("wall-input");
+    var suffix = $("wall-unit");
+    if (FP.units.get() === "ftin") {
+      inp.min = 0; inp.max = 24; inp.step = 0.5;
+      inp.value = String(Math.round(S.doc.wallThickness / FP.units.IN * 2) / 2);
+      if (suffix) suffix.textContent = "吋";
+    } else {
+      inp.min = 0; inp.max = 60; inp.step = 1;
+      inp.value = S.doc.wallThickness;
+      if (suffix) suffix.textContent = "cm";
+    }
+  }
+
+  function applyUnit(u) {
+    FP.units.set(u);
+    $("unit-cm").classList.toggle("is-active", u === "cm");
+    $("unit-ftin").classList.toggle("is-active", u === "ftin");
+    $("unit-cm").setAttribute("aria-pressed", u === "cm" ? "true" : "false");
+    $("unit-ftin").setAttribute("aria-pressed", u === "ftin" ? "true" : "false");
+    syncWallInput();
+    FP.render.render();
+    ui.refreshPanels();
+  }
+
   /* ---------- 綁定 ---------- */
 
   function bind() {
@@ -309,7 +341,7 @@
       onHint: ui.hint,
       onCursor: function (p) {
         var node = $("cursor-pos");
-        if (node) node.textContent = Math.round(p.x) + ", " + Math.round(p.y);
+        if (node) node.textContent = FP.units.fmtPoint(p.x, p.y);
       }
     });
 
@@ -357,13 +389,17 @@
 
     $("wall-input").addEventListener("change", function (e) {
       var v = parseFloat(e.target.value);
-      if (isNaN(v) || v < 0 || v > 60) { e.target.value = S.doc.wallThickness; return; }
+      var cm = FP.units.get() === "ftin" ? v * FP.units.IN : v;
+      if (isNaN(cm) || cm < 0 || cm > 60) { syncWallInput(); return; }
       store.begin("設定牆厚");
-      S.doc.wallThickness = v;
+      S.doc.wallThickness = Math.round(cm * 10) / 10;
       store.commit();
       FP.render.render();
       ui.refreshPanels();
     });
+
+    $("unit-cm").addEventListener("click", function () { applyUnit("cm"); });
+    $("unit-ftin").addEventListener("click", function () { applyUnit("ftin"); });
 
     $("doc-name").addEventListener("input", function (e) {
       S.doc.name = e.target.value.slice(0, 60);
@@ -508,6 +544,7 @@
     var prefs = store.prefs();
     if (typeof prefs.snap === "boolean") S.snap = prefs.snap;
     $("chk-snap").checked = S.snap;
+    FP.units.init(prefs.unit);
 
     if (!restored) {
       var res = FP.schema.normalize(SAMPLE);
@@ -518,8 +555,8 @@
     S.doc.upBearing = Math.round(S.doc.upBearing / 45) % 8 * 45;
 
     $("doc-name").value = S.doc.name;
-    $("wall-input").value = S.doc.wallThickness;
     $("compass-select").value = String(S.doc.upBearing);
+    applyUnit(FP.units.get());
 
     ui.setTool("select");
     setTab("summary");

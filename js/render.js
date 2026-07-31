@@ -90,15 +90,18 @@ window.FP = window.FP || {};
   function drawRulers(root, M) {
     var v = S.view;
     var T = M.ruler;
+    var cfg = FP.units.rulerConfig();
 
     // 依縮放決定刻度間距，避免刻度擠成一團
     var target = M.u * 8;           // 最小刻度至少 8px
-    var steps = [10, 25, 50, 100, 250, 500, 1000, 2500];
+    var steps = cfg.steps;
     var minor = steps[steps.length - 1];
     for (var i = 0; i < steps.length; i++) {
       if (steps[i] >= target) { minor = steps[i]; break; }
     }
-    var major = minor * (minor === 25 || minor === 250 || minor === 2500 ? 4 : 5);
+    var major = cfg.majorOf(minor);
+    // 以刻度序號判斷主刻度，避免呎吋這類非整數間距的浮點誤差
+    var majorEvery = Math.round(major / minor);
 
     var g = el("g", { "pointer-events": "none", "data-layer": "ruler" });
 
@@ -113,10 +116,10 @@ window.FP = window.FP || {};
       stroke: "var(--ruler-line)", "stroke-width": M.hair * 1.2
     }));
 
-    var startX = Math.floor(v.x / minor) * minor;
-    for (var x = startX; x < v.x + v.w; x += minor) {
+    var kx = Math.floor(v.x / minor);
+    for (var x = kx * minor; x < v.x + v.w; x += minor, kx += 1) {
       if (x < v.x + T) continue;
-      var isMajor = Math.abs(x % major) < 0.001;
+      var isMajor = ((kx % majorEvery) + majorEvery) % majorEvery === 0;
       var len = isMajor ? T * 0.55 : T * 0.28;
       g.appendChild(el("line", {
         x1: x, y1: v.y + T - len, x2: x, y2: v.y + T,
@@ -127,14 +130,14 @@ window.FP = window.FP || {};
           x: x + M.u * 3, y: v.y + T * 0.42,
           "font-size": M.tiny, fill: "var(--ruler-text)",
           "font-family": "var(--font-data)", "dominant-baseline": "middle"
-        }, String(Math.round(x))));
+        }, cfg.fmtTick(x)));
       }
     }
 
-    var startY = Math.floor(v.y / minor) * minor;
-    for (var y = startY; y < v.y + v.h; y += minor) {
+    var ky = Math.floor(v.y / minor);
+    for (var y = ky * minor; y < v.y + v.h; y += minor, ky += 1) {
       if (y < v.y + T) continue;
-      var majorY = Math.abs(y % major) < 0.001;
+      var majorY = ((ky % majorEvery) + majorEvery) % majorEvery === 0;
       var lenY = majorY ? T * 0.55 : T * 0.28;
       g.appendChild(el("line", {
         x1: v.x + T - lenY, y1: y, x2: v.x + T, y2: y,
@@ -147,7 +150,7 @@ window.FP = window.FP || {};
           "font-size": M.tiny, fill: "var(--ruler-text)",
           "font-family": "var(--font-data)", "text-anchor": "middle",
           transform: "rotate(-90," + tx + "," + ty + ")"
-        }, String(Math.round(y))));
+        }, cfg.fmtTick(y)));
       }
     }
 
@@ -160,7 +163,7 @@ window.FP = window.FP || {};
       "font-size": M.tiny, fill: "var(--ruler-text)",
       "font-family": "var(--font-data)",
       "text-anchor": "middle", "dominant-baseline": "middle"
-    }, "cm"));
+    }, FP.units.rulerConfig().unitLabel));
 
     root.appendChild(g);
   }
@@ -222,7 +225,7 @@ window.FP = window.FP || {};
           "text-anchor": "middle", "dominant-baseline": "middle",
           "font-size": M.tiny, fill: "var(--graphite)",
           "font-family": "var(--font-data)"
-        }, Math.round(ex.w) + "×" + Math.round(ex.h)));
+        }, FP.units.fmtDim(ex.w, ex.h, true)));
         g.appendChild(tg);
 
         if (on) {
@@ -283,7 +286,7 @@ window.FP = window.FP || {};
         "text-anchor": "middle", "dominant-baseline": "middle",
         "font-size": M.label, "font-weight": 600, fill: "var(--ink)"
       }, r.name));
-      var dim = r.w + " × " + r.h + (r.rot ? "   " + Math.round(r.rot) + "°" : "");
+      var dim = FP.units.fmtDim(r.w, r.h) + (r.rot ? "   " + Math.round(r.rot) + "°" : "");
       lg.appendChild(el("text", {
         x: r.w / 2, y: r.h / 2 + M.label * 0.75,
         "text-anchor": "middle", "dominant-baseline": "middle",
@@ -364,7 +367,7 @@ window.FP = window.FP || {};
       x: mx, y: my, "text-anchor": "middle", "dominant-baseline": "middle",
       "font-size": M.small, fill: col, "font-weight": 600,
       "font-family": "var(--font-data)"
-    }, String(Math.round(op.length))));
+    }, FP.units.fmtLen(op.length)));
     g.appendChild(mg);
 
     g.appendChild(el("circle", {

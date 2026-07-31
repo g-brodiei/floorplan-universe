@@ -170,6 +170,16 @@ window.FP = window.FP || {};
     if (r) r.disabled = !store.canRedo();
   }
 
+  /* 長度欄位：公分模式用數字框，呎吋模式用文字框顯示 11'10" 這種格式 */
+  function lenField(id, label, cm) {
+    if (FP.units.get() === "cm") {
+      return '<label class="field field-num"><span class="field-label">' + label + '</span>' +
+        '<input type="number" id="' + id + '" value="' + Math.round(cm) + '" step="1"></label>';
+    }
+    return '<label class="field field-num"><span class="field-label">' + label + '</span>' +
+      '<input type="text" id="' + id + '" value="' + esc(FP.units.fmtLen(cm)) + '" spellcheck="false"></label>';
+  }
+
   function renderProps() {
     var box = $("props");
     if (!S.sel) {
@@ -185,22 +195,20 @@ window.FP = window.FP || {};
         '<span class="chip">房間</span>' +
         '<label class="field"><span class="field-label">名稱</span>' +
         '<input type="text" id="p-name" value="' + esc(r.name) + '" maxlength="24"></label>' +
-        '<label class="field field-num"><span class="field-label">寬</span>' +
-        '<input type="number" id="p-w" value="' + r.w + '" min="20" step="1"></label>' +
-        '<label class="field field-num"><span class="field-label">高</span>' +
-        '<input type="number" id="p-h" value="' + r.h + '" min="20" step="1"></label>' +
+        lenField("p-w", "寬", r.w) +
+        lenField("p-h", "高", r.h) +
         '<label class="field field-num"><span class="field-label">角度</span>' +
         '<input type="number" id="p-rot" value="' + Math.round(r.rot) + '" step="5"></label>' +
         '<span class="props-note">上牆朝 ' + G.wallCompass(r, "N", S.doc.upBearing) + '</span>' +
         "</div>";
 
       bindText("p-name", function (v) { r.name = v; }, "改名稱");
-      bindNumber("p-w", function (v) {
+      bindLen("p-w", function (v) {
         if (v < 20) return;
         r.w = v;
         clampOpenings(r);
       }, "改尺寸");
-      bindNumber("p-h", function (v) {
+      bindLen("p-h", function (v) {
         if (v < 20) return;
         r.h = v;
         clampOpenings(r);
@@ -224,20 +232,18 @@ window.FP = window.FP || {};
         '<span class="chip chip-' + op.type + '">' + (op.type === "window" ? "窗戶" : "門") + "</span>" +
         '<span class="props-note">' + esc(room.name) + " · " +
         FP.schema.WALL_LABEL[op.wall] + "牆，朝" + G.wallCompass(room, op.wall, S.doc.upBearing) + "</span>" +
-        '<label class="field field-num"><span class="field-label">寬</span>' +
-        '<input type="number" id="p-len" value="' + Math.round(op.length) + '" min="10" step="5"></label>' +
-        '<label class="field field-num"><span class="field-label">距牆端</span>' +
-        '<input type="number" id="p-off" value="' + Math.round(op.offset) + '" min="0" step="5"></label>' +
+        lenField("p-len", "寬", op.length) +
+        lenField("p-off", "距牆端", op.offset) +
         '<label class="field"><span class="field-label">種類</span>' +
         '<select id="p-note"><option value="">未指定</option>' + opts + "</select></label>" +
         '<button class="btn btn-slim" id="p-flip">換到對面牆</button>' +
         "</div>";
 
-      bindNumber("p-len", function (v) {
+      bindLen("p-len", function (v) {
         op.length = Math.max(10, Math.min(v, L.wallLen));
         op.offset = Math.min(op.offset, L.wallLen - op.length);
       }, "改開口寬度");
-      bindNumber("p-off", function (v) {
+      bindLen("p-off", function (v) {
         op.offset = Math.max(0, Math.min(v, L.wallLen - op.length));
       }, "移動開口");
       $("p-note").addEventListener("change", function (e) {
@@ -264,8 +270,7 @@ window.FP = window.FP || {};
       box.innerHTML =
         '<div class="props-row">' +
         '<span class="chip">底圖</span>' +
-        '<label class="field field-num"><span class="field-label">寬</span>' +
-        '<input type="number" id="p-uw" value="' + Math.round(u.w) + '" min="20" step="10"></label>' +
+        lenField("p-uw", "寬", u.w) +
         '<label class="field field-num"><span class="field-label">角度</span>' +
         '<input type="number" id="p-urot" value="' + Math.round(u.rot) + '" step="5"></label>' +
         '<label class="field field-num"><span class="field-label">濃度</span>' +
@@ -274,7 +279,7 @@ window.FP = window.FP || {};
         "</div>";
 
       $("p-uw").addEventListener("change", function (e) {
-        var v = parseFloat(e.target.value);
+        var v = FP.units.parseLen(e.target.value);
         if (!(v > 20)) return;
         store.begin("調整底圖");
         var ratio = u.h / u.w;
@@ -309,10 +314,8 @@ window.FP = window.FP || {};
       '<label class="field"><span class="field-label">內容</span>' +
       '<input type="text" id="p-text" value="' + esc(ex.text) + '" maxlength="40"></label>' +
       (isArea
-        ? '<label class="field field-num"><span class="field-label">寬</span>' +
-          '<input type="number" id="p-ew" value="' + Math.round(ex.w) + '" min="10" step="5"></label>' +
-          '<label class="field field-num"><span class="field-label">高</span>' +
-          '<input type="number" id="p-eh" value="' + Math.round(ex.h) + '" min="10" step="5"></label>' +
+        ? lenField("p-ew", "寬", ex.w) +
+          lenField("p-eh", "高", ex.h) +
           '<label class="field field-num"><span class="field-label">角度</span>' +
           '<input type="number" id="p-erot" value="' + Math.round(ex.rot) + '" step="5"></label>'
         : "") +
@@ -320,8 +323,8 @@ window.FP = window.FP || {};
 
     bindText("p-text", function (v) { ex.text = v; }, "改文字");
     if (isArea) {
-      bindNumber("p-ew", function (v) { ex.w = Math.max(10, v); }, "改尺寸");
-      bindNumber("p-eh", function (v) { ex.h = Math.max(10, v); }, "改尺寸");
+      bindLen("p-ew", function (v) { ex.w = Math.max(10, v); }, "改尺寸");
+      bindLen("p-eh", function (v) { ex.h = Math.max(10, v); }, "改尺寸");
       bindNumber("p-erot", function (v) { ex.rot = FP.schema.norm360(v); }, "旋轉");
     }
   }
@@ -363,22 +366,42 @@ window.FP = window.FP || {};
     });
   }
 
+  /* 長度欄位的綁定：輸入經 FP.units.parseLen 解讀後以公分套用 */
+  function bindLen(id, apply, label) {
+    var node = $(id);
+    if (!node) return;
+    node.addEventListener("change", function (e) {
+      var v = FP.units.parseLen(e.target.value);
+      if (isNaN(v)) {
+        toast('看不懂這個長度。可以輸入 300、12\'6" 或 76"', "warn");
+        refreshPanels();
+        return;
+      }
+      store.begin(label);
+      apply(Math.round(v));
+      store.commit();
+      FP.render.render();
+      refreshPanels();
+    });
+  }
+
   /* ---------- 文字摘要 ---------- */
 
   function buildSummary() {
     var doc = S.doc;
+    var U = FP.units;
     var lines = [];
-    lines.push("【" + doc.name + "】單位：公分");
+    lines.push("【" + doc.name + "】" + U.summaryUnitLine());
     lines.push("畫面上方 = " + G.bearing8(doc.upBearing));
     lines.push("座標 (x, y) 為房間左上角，x 往右增加、y 往下增加。角度為順時針旋轉。");
-    lines.push("牆厚 " + doc.wallThickness + "，房間尺寸為室內淨寬。");
+    lines.push("牆厚 " + U.fmtLen(doc.wallThickness) + "，房間尺寸為室內淨寬。");
     lines.push("");
 
     var total = 0;
     doc.rooms.forEach(function (r) {
       total += r.w * r.h;
-      lines.push("■ " + r.name + "  " + r.w + " × " + r.h +
-        "  位置(" + Math.round(r.x) + ", " + Math.round(r.y) + ")" +
+      lines.push("■ " + r.name + "  " + U.fmtDim(r.w, r.h) +
+        "  位置(" + U.fmtPoint(r.x, r.y) + ")" +
         (r.rot ? "  旋轉 " + Math.round(r.rot) + "°" : ""));
       if (!r.openings.length) {
         lines.push("    （未標窗戶或門）");
@@ -390,8 +413,8 @@ window.FP = window.FP || {};
           var from = (op.wall === "N" || op.wall === "S") ? "左端" : "上端";
           lines.push("    ・" + (op.type === "window" ? "窗" : "門") + "：" +
             FP.schema.WALL_LABEL[op.wall] + "牆，朝" + G.wallCompass(r, op.wall, doc.upBearing) +
-            "，寬" + Math.round(op.length) +
-            "，距" + from + Math.round(op.offset) +
+            "，寬" + U.fmtLen(op.length) +
+            "，距" + from + U.fmtLen(op.offset) +
             (op.note ? "，" + op.note : ""));
         });
       }
@@ -402,8 +425,8 @@ window.FP = window.FP || {};
       lines.push("");
       lines.push("【額外區域】");
       areas.forEach(function (e) {
-        lines.push("□ " + e.text + "  " + Math.round(e.w) + " × " + Math.round(e.h) +
-          "  位置(" + Math.round(e.x) + ", " + Math.round(e.y) + ")" +
+        lines.push("□ " + e.text + "  " + U.fmtDim(e.w, e.h) +
+          "  位置(" + U.fmtPoint(e.x, e.y) + ")" +
           (e.rot ? "  旋轉 " + Math.round(e.rot) + "°" : ""));
       });
     }
@@ -413,7 +436,7 @@ window.FP = window.FP || {};
       lines.push("");
       lines.push("【備註】");
       labels.forEach(function (e) {
-        lines.push("※ " + e.text + "  位置(" + Math.round(e.x) + ", " + Math.round(e.y) + ")");
+        lines.push("※ " + e.text + "  位置(" + U.fmtPoint(e.x, e.y) + ")");
       });
     }
 
@@ -421,11 +444,9 @@ window.FP = window.FP || {};
     lines.push("");
     if (b) {
       lines.push("整體外框（含外牆）約 " +
-        Math.round(b.x2 - b.x1 + doc.wallThickness) + " × " +
-        Math.round(b.y2 - b.y1 + doc.wallThickness));
+        U.fmtDim(b.x2 - b.x1 + doc.wallThickness, b.y2 - b.y1 + doc.wallThickness));
     }
-    lines.push("室內淨面積合計約 " + (total / 10000).toFixed(1) + " 平方公尺（約 " +
-      (total / 10000 / 3.305).toFixed(1) + " 坪，不含牆體與額外區域）");
+    lines.push("室內淨面積合計約 " + U.fmtAreaTotal(total));
 
     return lines.join("\n");
   }
@@ -514,6 +535,15 @@ window.FP = window.FP || {};
     } catch (e) {
       toast(e.message, "warn");
       return false;
+    }
+    // 呎吋模式下清單裡的數字視為吋，換算成公分儲存（座標一併換算以維持排版比例）
+    if (FP.units.get() === "ftin") {
+      res.rooms.forEach(function (r) {
+        r.w = Math.round(r.w * FP.units.IN);
+        r.h = Math.round(r.h * FP.units.IN);
+        r.x = Math.round(r.x * FP.units.IN);
+        r.y = Math.round(r.y * FP.units.IN);
+      });
     }
     var doc = FP.schema.blank();
     doc.name = "我的平面圖";
