@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>格局編輯器 — 把房間尺寸排成平面圖</title>
+<meta name="description" content="輸入各個房間的長寬，拖出你家的平面圖，標上窗戶和門的方位，再匯出成文字、JSON 或圖片。資料存在自己的瀏覽器，不會上傳。">
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="masthead">
+    <h1 class="wordmark"><span class="wordmark-tick" aria-hidden="true"></span>格局編輯器</h1>
+    <input type="text" id="doc-name" class="doc-name" aria-label="這張平面圖的名稱" maxlength="60">
+    <span id="save-state" class="save-state">尚未存檔</span>
+    <div class="masthead-actions">
+      <button class="btn" id="btn-start">開新的</button>
+      <button class="btn" id="btn-help">怎麼用</button>
+    </div>
+  </header>
+
+  <div class="toolbar" id="toolbar" role="toolbar" aria-label="編輯工具">
+    <div class="tool-group">
+      <button class="tool is-active" data-tool="select" aria-pressed="true">選取</button>
+      <button class="btn btn-slim" id="btn-add-room">加房間</button>
+    </div>
+    <span class="tool-sep"></span>
+    <div class="tool-group" id="tool-openings">
+      <button class="tool" data-tool="window" aria-pressed="false">加窗戶</button>
+      <button class="tool" data-tool="door" aria-pressed="false">加門</button>
+    </div>
+    <span class="tool-sep"></span>
+    <div class="tool-group">
+      <button class="tool" data-tool="area" aria-pressed="false">畫區域</button>
+      <button class="tool" data-tool="label" aria-pressed="false">加文字</button>
+    </div>
+    <span class="tool-sep"></span>
+    <div class="tool-group" id="tool-rotate-group">
+      <button class="btn btn-slim" id="btn-rot-ccw" title="逆時針 90 度">↺ 90°</button>
+      <button class="btn btn-slim" id="btn-rot-cw" title="順時針 90 度">↻ 90°</button>
+      <button class="btn btn-slim btn-danger" id="btn-delete">刪除</button>
+    </div>
+    <span class="tool-sep"></span>
+    <div class="tool-group">
+      <button class="btn btn-slim" id="btn-undo" title="復原">復原</button>
+      <button class="btn btn-slim" id="btn-redo" title="重做">重做</button>
+    </div>
+    <span class="tool-sep"></span>
+    <div class="tool-group">
+      <label class="mini-label">牆厚
+        <input type="number" id="wall-input" value="12" min="0" max="60" step="1">
+      </label>
+      <label class="mini-label">
+        <input type="checkbox" id="chk-snap" checked> 貼齊
+      </label>
+      <button class="btn btn-slim" id="btn-underlay">放底圖</button>
+    </div>
+  </div>
+
+  <p class="hint" id="hint">拖動房間排出你家的形狀。選起來後，上方的圓形把手可以自由旋轉。</p>
+
+  <div class="stage" id="stage">
+    <svg id="board" xmlns="http://www.w3.org/2000/svg" role="application"
+         aria-label="平面圖畫布，可拖曳房間、窗戶與門"></svg>
+
+    <div class="stage-overlay overlay-tl">
+      <div class="panel-float">
+        <label class="mini-label" for="compass-select">畫面上方朝
+          <select id="compass-select">
+            <option value="0">北</option>
+            <option value="45">東北</option>
+            <option value="90">東</option>
+            <option value="135">東南</option>
+            <option value="180">南</option>
+            <option value="225">西南</option>
+            <option value="270">西</option>
+            <option value="315">西北</option>
+          </select>
+        </label>
+      </div>
+      <div class="panel-float readout">
+        游標 <strong id="cursor-pos">0, 0</strong>
+      </div>
+    </div>
+
+    <div class="stage-overlay overlay-br">
+      <button class="btn zoom-btn" id="btn-zoom-in" aria-label="放大">＋</button>
+      <button class="btn zoom-btn" id="btn-zoom-out" aria-label="縮小">－</button>
+      <button class="btn zoom-btn" id="btn-fit" aria-label="全部顯示" style="font-size:11px">全</button>
+    </div>
+  </div>
+
+  <div class="props" id="props">
+    <p class="props-empty">點一下房間、窗戶、門或區域，這裡就會出現可以調整的欄位。</p>
+  </div>
+
+  <div class="tabs" id="tabs" role="tablist">
+    <button class="tab is-active" data-tab="summary" role="tab" aria-selected="true">文字摘要</button>
+    <button class="tab" data-tab="data" role="tab" aria-selected="false">資料</button>
+    <button class="tab" data-tab="ai" role="tab" aria-selected="false">用 AI 匯入</button>
+    <button class="tab" data-tab="guide" role="tab" aria-selected="false">使用說明</button>
+  </div>
+
+  <section class="tab-panel" data-panel="summary" role="tabpanel">
+    <p class="panel-intro">
+      這段文字把每個房間的位置、每扇窗戶和門朝向哪個方位都寫清楚了。
+      複製起來貼給設計師、師傅或 AI，對方不用看圖也能理解你家的格局。
+    </p>
+    <textarea id="summary-text" rows="14" readonly aria-label="格局文字摘要"></textarea>
+    <div class="panel-actions">
+      <button class="btn btn-primary" id="btn-copy-summary">複製文字摘要</button>
+      <button class="btn" id="btn-download-png">下載平面圖 PNG</button>
+      <span class="readout" id="room-count"></span>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="data" role="tabpanel" hidden>
+    <p class="panel-intro">
+      這是完整的結構化資料。下載一份留著，之後想接著改，或換一台電腦，
+      從「開新的 → 貼上 JSON」放回來就行。
+    </p>
+    <textarea id="json-text" rows="14" readonly aria-label="JSON 資料"></textarea>
+    <div class="panel-actions">
+      <button class="btn btn-primary" id="btn-download-json">下載 JSON</button>
+      <button class="btn" id="btn-copy-json">複製 JSON</button>
+      <button class="btn btn-danger" id="btn-reset">清空重來</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="ai" role="tabpanel" hidden>
+    <p class="panel-intro">
+      不想一間一間拖的話，用講的也可以。把下面的提示詞複製給任何 AI，
+      加上你家的描述，它會回一份資料，貼回來就整份匯入。
+    </p>
+    <ol class="panel-steps">
+      <li>在下面的框裡<strong>描述你家</strong>：有哪些空間、各自的長寬、誰跟誰相鄰、窗戶和門在哪面牆。</li>
+      <li>按<strong>複製提示詞</strong>，貼進任何 AI 對話。</li>
+      <li>把 AI 回覆的內容<strong>整段貼回最下面的框</strong>，按匯入。</li>
+    </ol>
+
+    <div class="field-block">
+      <label for="ai-notes">你家的情況（會併進提示詞裡）</label>
+      <textarea id="ai-notes" rows="5"
+        placeholder="例如：六樓頂樓加蓋，大門朝西北。客廳 358x487，東南面有一扇 210 的大窗。主臥室 469x358 在客廳北邊，只有西北面一扇 145 的橫拉窗。廁所 183x277 ⋯⋯"></textarea>
+    </div>
+
+    <div class="field-block">
+      <label for="ai-prompt">要複製給 AI 的提示詞</label>
+      <textarea id="ai-prompt" rows="10" readonly></textarea>
+    </div>
+
+    <div class="panel-actions" style="margin-bottom:14px">
+      <button class="btn btn-primary" id="btn-copy-prompt">複製提示詞</button>
+    </div>
+
+    <div class="field-block">
+      <label for="ai-reply">把 AI 的回覆貼在這裡</label>
+      <textarea id="ai-reply" rows="6"
+        placeholder="整段貼進來就好，前後有多餘的說明文字也沒關係"></textarea>
+    </div>
+
+    <div class="panel-actions">
+      <button class="btn btn-primary" id="btn-paste-ai">匯入這份資料</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="guide" role="tabpanel" hidden>
+    <div class="guide">
+      <div>
+        <h3>從哪裡開始</h3>
+        <p>按右上角的<strong>開新的</strong>，有四條路：打一份房間清單、貼上之前的 JSON、
+          把平面圖照片放到底層描、或載入範例改成你家。</p>
+        <p>打清單最快。一行一個房間，寫成 <code>客廳 358x487</code>，
+          先把房間生出來，位置之後用拖的。</p>
+      </div>
+
+      <div>
+        <h3>排位置</h3>
+        <ul>
+          <li>直接拖房間。相鄰時會吸附到兩個位置：<strong>留一道牆厚</strong>（各自有牆）和<strong>完全貼齊</strong>（共用一道牆或直接連通）。</li>
+          <li>要轉向：選起房間後拖<strong>上方的圓形把手</strong>，任意角度都行，靠近 15 度的倍數會吸附。也可以按工具列的 90 度按鈕，或用中括號做 15 度微調。</li>
+          <li>兩指捏合可以縮放，空白處拖曳可以平移。</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>開窗戶和門</h3>
+        <ul>
+          <li>選<strong>加窗戶</strong>或<strong>加門</strong>，然後點房間的<strong>牆線</strong>，不是中間。</li>
+          <li>加好後拖兩端的圓點調寬度，拖中間可以左右移動。</li>
+          <li>下方欄位可以選種類。沒有門扇的通道選<strong>開口（無門）</strong>，牆會被整段打開。</li>
+          <li>方位是自動算的。房間轉了幾度，它的窗戶就跟著轉，摘要裡會標成「朝西北西」這種實際方位。</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>方位怎麼設</h3>
+        <p>左上角選「畫面上方朝哪個方位」。如果你知道大門朝西北，就把大門那面轉到畫面上方，
+          再選西北——這樣所有窗戶的朝向都會自動算對。討論通風、日照、西曬時就靠這個。</p>
+      </div>
+
+      <div>
+        <h3>存檔</h3>
+        <p>每次改動都會自動存在你自己的瀏覽器裡，關掉分頁再開回來還在，不會上傳到任何地方。</p>
+        <p>但瀏覽器的儲存空間可能被清掉（清除瀏覽資料、無痕模式、換裝置）。
+          重要的圖<strong>請到「資料」頁下載一份 JSON 備份</strong>。</p>
+      </div>
+
+      <div>
+        <h3>鍵盤</h3>
+        <ul class="keymap">
+          <li><kbd>V</kbd> 選取</li>
+          <li><kbd>W</kbd> 加窗戶</li>
+          <li><kbd>D</kbd> 加門</li>
+          <li><kbd>A</kbd> 畫區域</li>
+          <li><kbd>T</kbd> 加文字</li>
+          <li><kbd>F</kbd> 全部顯示</li>
+          <li><kbd>[</kbd> <kbd>]</kbd> 轉 15 度</li>
+          <li><kbd>Del</kbd> 刪除</li>
+          <li><kbd>Esc</kbd> 取消選取</li>
+          <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    <span>資料只存在你的瀏覽器，不會上傳。</span>
+    <span>單位一律公分。</span>
+  </footer>
+
+</div>
+
+<div class="dialog-backdrop" id="dialog-backdrop" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <div class="dialog-head">
+      <h2 id="dialog-title"></h2>
+      <button class="dialog-close" id="dialog-close" aria-label="關閉">×</button>
+    </div>
+    <div class="dialog-body" id="dialog-body"></div>
+    <div class="dialog-actions" id="dialog-actions"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<input type="file" id="file-json" accept=".json,application/json,text/plain" class="visually-hidden">
+<input type="file" id="file-image" accept="image/*" class="visually-hidden">
+
+<script src="js/schema.js"></script>
+<script src="js/geom.js"></script>
+<script src="js/store.js"></script>
+<script src="js/render.js"></script>
+<script src="js/interact.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/tour.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

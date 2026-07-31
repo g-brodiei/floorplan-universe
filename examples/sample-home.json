@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "name": "範例：三房公寓",
+  "unit": "cm",
+  "upBearing": 0,
+  "wallThickness": 12,
+  "rooms": [
+    {
+      "name": "客廳",
+      "w": 420, "h": 360, "x": 0, "y": 0, "rot": 0,
+      "fill": "#F2DFC6",
+      "openings": [
+        { "type": "window", "wall": "S", "offset": 110, "length": 240, "note": "大窗" },
+        { "type": "door", "wall": "E", "offset": 140, "length": 100, "note": "開口（無門）" },
+        { "type": "door", "wall": "N", "offset": 30, "length": 90, "note": "紗窗門＋鐵門" }
+      ]
+    },
+    {
+      "name": "餐廚",
+      "w": 300, "h": 360, "x": 432, "y": 0, "rot": 0,
+      "fill": "#D8E8D2",
+      "openings": [
+        { "type": "window", "wall": "S", "offset": 90, "length": 120, "note": "推射窗" },
+        { "type": "door", "wall": "E", "offset": 150, "length": 80, "note": "拉門" }
+      ]
+    },
+    {
+      "name": "主臥室",
+      "w": 380, "h": 330, "x": 0, "y": 372, "rot": 0,
+      "fill": "#D3E2EE",
+      "openings": [
+        { "type": "window", "wall": "S", "offset": 100, "length": 180, "note": "橫拉窗" },
+        { "type": "door", "wall": "N", "offset": 250, "length": 80, "note": "門" }
+      ]
+    },
+    {
+      "name": "次臥",
+      "w": 300, "h": 330, "x": 392, "y": 372, "rot": 0,
+      "fill": "#E6DDEE",
+      "openings": [
+        { "type": "window", "wall": "S", "offset": 80, "length": 150, "note": "橫拉窗" },
+        { "type": "door", "wall": "N", "offset": 40, "length": 80, "note": "門" }
+      ]
+    },
+    {
+      "name": "浴室",
+      "w": 220, "h": 250, "x": 704, "y": 372, "rot": 0,
+      "fill": "#D2E9E6",
+      "openings": [
+        { "type": "window", "wall": "E", "offset": 60, "length": 90, "note": "氣窗" },
+        { "type": "door", "wall": "N", "offset": 60, "length": 70, "note": "門" }
+      ]
+    },
+    {
+      "name": "走廊",
+      "w": 690, "h": 100, "x": 0, "y": 260, "rot": 0,
+      "fill": "#E2E2DA",
+      "openings": []
+    }
+  ],
+  "extras": [
+    { "kind": "area", "text": "前陽台", "x": 0, "y": -140, "w": 420, "h": 128, "rot": 0 },
+    { "kind": "label", "text": "電箱在這面牆", "x": 740, "y": 250 }
+  ]
+}
