@@ -1,0 +1,22 @@
+{
+  "name": "floorplan-universe",
+  "version": "1.1.0",
+  "description": "格局編輯器 Floorplan Editor — 把房間尺寸排成平面圖。Browser-only floorplan editor, data stays in localStorage.",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/g-brodiei/floorplan-universe.git"
+  },
+  "homepage": "https://g-brodiei.github.io/floorplan-universe/",
+  "scripts": {
+    "serve": "python3 -m http.server 4173",
+    "test": "node tests/units.js && node tests/smoke.js && node tests/reload.js && node tests/render.js",
+    "test:e2e": "playwright test",
+    "build:single": "node build-single.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0",
+    "jsdom": "^24.1.0"
+  }
+}

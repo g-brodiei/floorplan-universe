@@ -124,16 +124,21 @@ python3 -m http.server 8000
 
 沒有建置流程。改完直接重新整理。
 
-倉庫附了三份用 jsdom 寫的測試，涵蓋啟動、匯入匯出、持久化、方位換算和 SVG 結構：
-
 ```bash
-npm install jsdom
-node tests/smoke.js
-node tests/reload.js
-node tests/render.js
+npm install            # 只有測試需要相依套件
+npm test               # 單位換算 + jsdom 測試（啟動、匯入匯出、持久化、方位、SVG）
+npm run test:e2e       # Playwright 端對端測試（桌機與手機模擬各一輪）
 ```
 
 jsdom 沒有 SVG 幾何 API，測試檔開頭補了最小可用的替身。
+第一次跑 e2e 前先 `npx playwright install chromium`。
+
+### 流程與版本
+
+- main 受保護：改動一律開分支、發 Pull Request，CI（測試）過了才能合併
+- 合併進 main 會自動跑測試並部署到 GitHub Pages
+- 版號依語意化版本（SemVer），變更記錄在 `CHANGELOG.md`；
+  發版時更新 changelog、把 `package.json` 版號調上去、打 `vX.Y.Z` 標籤並發 GitHub Release
 
 ## 已知限制
 
