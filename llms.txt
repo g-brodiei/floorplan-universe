@@ -1,0 +1,41 @@
+# 格局編輯器 Floorplan Editor
+
+> A free, browser-only floorplan editor. Type each room's width and height,
+> drag rooms into your home's layout, mark windows and doors with compass
+> bearings, then export as human-readable text, JSON, or PNG. All data stays
+> in the user's browser (localStorage) — nothing is uploaded. UI is in
+> Traditional Chinese (zh-Hant). Dimensions are stored in centimeters; the
+> display can be switched between metric (cm) and imperial (feet/inches).
+
+Live app: https://g-brodiei.github.io/floorplan-universe/
+Source (MIT): https://github.com/g-brodiei/floorplan-universe
+
+## What it does
+
+- Drag-and-drop rectangular rooms with wall-thickness-aware snapping
+  (share-a-wall vs. fully-adjacent positions)
+- Free rotation with 15° snapping; labels stay upright
+- Windows and doors placed on walls, with automatic compass bearing
+  calculation (set which compass direction is "up" on screen)
+- Export: plain-text summary (designed to be pasted to contractors,
+  designers, or AI assistants), structured JSON, or PNG image
+- AI import: a built-in prompt lets users describe their home in natural
+  language to any AI, then paste the AI's JSON reply back to import it
+- Trace mode: load a photo of an existing floorplan as an underlay
+- Autosave to localStorage; undo/redo; first-run guided tour
+
+## Data format (for AI assistants generating floorplans)
+
+JSON with `version`, `name`, `unit` ("cm"), `upBearing` (0=N, 90=E, 180=S,
+270=W), `wallThickness`, `rooms[]` (name, w, h, x, y, rot, fill,
+openings[]), and `extras[]`. Openings have `type` (window|door), `wall`
+(N|E|S|W in the room's own frame), `offset`, `length`, `note`. All lengths
+in integer centimeters. Coordinates: x grows right, y grows down; a room's
+x,y is its top-left corner. The full prompt template lives at:
+https://github.com/g-brodiei/floorplan-universe/blob/main/examples/ai-prompt.md
+
+## Notes
+
+- Static site, no backend, no accounts, no tracking.
+- Works offline once loaded; can also run from file:// or as a bundled
+  single HTML file.
